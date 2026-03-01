@@ -2,6 +2,7 @@ import streamlit as st
 import feedparser
 import requests
 import datetime
+import base64
 from urllib.parse import quote
 
 # ページ設定
@@ -46,8 +47,11 @@ def local_css():
         font-weight: 800;
         text-align: center;
         margin-bottom: 30px;
-        color: #444;
-        text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        color: #ffffff;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+        padding: 50px 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
     
     .section-title {
@@ -153,6 +157,23 @@ def get_weather_info(weathercode):
 
 def main():
     local_css()
+    
+    # バナー画像をBase64形式で読み込み、タイトルの背景に設定する
+    try:
+        with open("banner.png", "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+            bg_css = f"""
+            <style>
+            .app-title {{
+                background-image: url("data:image/png;base64,{encoded_string}");
+                background-size: cover;
+                background-position: center;
+            }}
+            </style>
+            """
+            st.markdown(bg_css, unsafe_allow_html=True)
+    except FileNotFoundError:
+        pass
     
     st.markdown('<div class="app-title">🌍 Daily Nexus : News & Weather</div>', unsafe_allow_html=True)
 
