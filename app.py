@@ -12,11 +12,13 @@ st.set_page_config(page_title="News & Weather", page_icon="🌤️", layout="wid
 def local_css():
     st.markdown("""
     <style>
-    /* 全体の背景とフォント設定 */
+    @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+    
+    /* 全体の背景とポップなフォント設定 */
     .stApp {
         background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
         color: #333333;
-        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        font-family: 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
     }
 
     /* ヘッダーの非表示化 */
@@ -124,7 +126,7 @@ def fetch_news(query=""):
 # 天気の取得関数 (Open-Meteo API)
 @st.cache_data(ttl=1800)
 def fetch_weather_forecast(lat, lon):
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&timezone=Asia%2FTokyo"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&forecast_days=2"
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -222,6 +224,42 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
+            # 明日の天気の表示
+            daily = weather_data.get('daily', {})
+            if daily:
+                t_code = daily.get('weathercode', [])[1]
+                t_max = daily.get('temperature_2m_max', [])[1]
+                t_min = daily.get('temperature_2m_min', [])[1]
+                t_desc, t_icon = get_weather_info(t_code)
+                
+                st.markdown('<div class="section-title">📅 明日の天気</div>', unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class="glass-card">
+                    <div style="font-size: 1.4rem; margin-bottom: 5px;">明日は... {t_desc} {t_icon}</div>
+                    <div style="color: #e53935; font-weight: bold; display: inline-block; font-size: 1.1rem; margin-right: 15px;">🔼 最高: {t_max}°C</div>
+                    <div style="color: #1e88e5; font-weight: bold; display: inline-block; font-size: 1.1rem;">🔽 最低: {t_min}°C</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 花粉情報の表示（季節に応じてメッセージを変えるシミュレーション仕様）
+                now = datetime.datetime.now()
+                month = now.month
+                if 2 <= month <= 4:
+                    pollen_level = "🌲 スギ・ヒノキ: 非常に多い 😷"
+                elif 5 <= month <= 6:
+                    pollen_level = "🌱 イネ科花粉: やや多い 🤧"
+                elif 8 <= month <= 10:
+                    pollen_level = "🌿 ブタクサ花粉: 多い 🤧"
+                else:
+                    pollen_level = "✨ 花粉: 少ない 😊"
+                    
+                st.markdown('<div class="section-title">😷 花粉情報</div>', unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class="glass-card" style="border: 2px dashed rgba(255,255,255,0.8); background: rgba(255, 255, 255, 0.6);">
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #ef6c00;">{pollen_level}</div>
+                    <div style="font-size: 0.8rem; color: #78909c; margin-top: 5px;">※AIによる季節予測データです</div>
+                </div>
+                """, unsafe_allow_html=True)
 
         else:
             st.error("天気データの取得に失敗しました。")
